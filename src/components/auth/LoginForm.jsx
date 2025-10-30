@@ -1,6 +1,16 @@
 import { login } from "@/app/login/actions";
 
-export default function LoginForm({ error }) {
+const errorMessages = {
+  validation: "Email atau password tidak valid.",
+  "invalid-credentials": "Email atau password salah.",
+  "rate-limited": "Terlalu banyak percobaan login. Coba lagi setelah beberapa saat.",
+  "service-unavailable": "Sistem belum siap. Jalankan migrasi & seed database atau hubungi administrator.",
+  "auth-error": "Terjadi kesalahan, silakan coba lagi.",
+};
+
+export default function LoginForm({ error, redirectPath }) {
+  const errorMessage = error ? errorMessages[error] ?? errorMessages["auth-error"] : null;
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-6">
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -12,6 +22,9 @@ export default function LoginForm({ error }) {
         </header>
 
         <form className="space-y-4" action={login}>
+          {redirectPath ? (
+            <input type="hidden" name="redirect" value={redirectPath} />
+          ) : null}
           <div className="space-y-2 text-left">
             <label htmlFor="email" className="text-sm font-medium text-slate-700">
               Email
@@ -22,7 +35,7 @@ export default function LoginForm({ error }) {
               type="email"
               required
               placeholder="you@example.com"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
@@ -36,15 +49,13 @@ export default function LoginForm({ error }) {
               type="password"
               required
               placeholder="••••••••"
-              className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
-          {error && (
+          {errorMessage && (
             <p className="rounded-lg bg-rose-50 px-4 py-2 text-sm text-rose-600">
-              {error === "missing-credentials"
-                ? "Email dan password wajib diisi."
-                : "Terjadi kesalahan, silakan coba lagi."}
+              {errorMessage}
             </p>
           )}
 

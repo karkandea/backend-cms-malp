@@ -1,19 +1,17 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import LoginForm from "@/components/auth/LoginForm";
-import { AUTH_COOKIE } from "@/lib/auth-constants";
+import { requireCmsSession } from "@/lib/auth/session";
 
 export default async function LoginPage({ searchParams }) {
-  const cookieStore = await cookies();
-  if (cookieStore.get(AUTH_COOKIE)) {
+  const session = await requireCmsSession();
+  if (session) {
     redirect("/dashboard");
   }
 
-  const resolvedSearchParams = await searchParams;
   const errorValue =
-    typeof resolvedSearchParams?.error === "string"
-      ? resolvedSearchParams.error
-      : undefined;
+    typeof searchParams?.error === "string" ? searchParams.error : undefined;
+  const redirectPath =
+    typeof searchParams?.redirect === "string" ? searchParams.redirect : undefined;
 
-  return <LoginForm error={errorValue} />;
+  return <LoginForm error={errorValue} redirectPath={redirectPath} />;
 }

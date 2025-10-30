@@ -68,13 +68,7 @@ export default function Sidebar() {
                         href="/dashboard/outlet"
                         className="block rounded-md py-2 pl-11 pr-4 text-gray-700 transition hover:bg-gray-100"
                       >
-                        Overview
-                      </Link>
-                      <Link
-                        href="/dashboard/outlet/123"
-                        className="block rounded-md py-2 pl-11 pr-4 text-gray-700 transition hover:bg-gray-100"
-                      >
-                        Detail Sample
+                        Outlet
                       </Link>
                       <Link
                         href="/dashboard/area"

@@ -1,26 +1,15 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/dashboard/Sidebar";
 import Header from "@/components/dashboard/Header";
-import { AUTH_COOKIE } from "@/lib/auth-constants";
+import { requireCmsSession } from "@/lib/auth/session";
 
 export default async function DashboardLayout({ children }) {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get(AUTH_COOKIE);
-
-  if (!sessionCookie) {
-    redirect("/");
+  const session = await requireCmsSession();
+  if (!session) {
+    redirect("/login");
   }
 
-  let userName = "Dualangka User";
-  try {
-    const parsed = JSON.parse(sessionCookie.value);
-    if (parsed?.email) {
-      userName = parsed.email;
-    }
-  } catch (error) {
-    redirect("/");
-  }
+  const userName = session.user.name ?? session.user.email;
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
