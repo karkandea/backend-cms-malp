@@ -25,7 +25,9 @@ const s3Client = new S3Client({
   checksumValidation: "never",
 });
 
-export function buildOutletAssetKey(kind: "logo" | "banner", fileExtension: string) {
+export type OutletAssetKind = "logo" | "banner" | "menu" | "room";
+
+export function buildOutletAssetKey(kind: OutletAssetKind, fileExtension: string) {
   const safeExtension = fileExtension.replace(/[^a-z0-9]/gi, "").toLowerCase() || "bin";
   return `outlets/${kind}/${randomUUID()}.${safeExtension}`;
 }

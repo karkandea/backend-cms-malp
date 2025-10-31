@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -128,12 +129,12 @@ export default function OutletConfigurationView({ outlet }) {
     <>
       <section className="space-y-6">
         <header className="flex flex-wrap items-center gap-3">
-          <a
+          <Link
             href="/dashboard/outlet"
             className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200"
           >
             ← Outlet List
-          </a>
+          </Link>
           <div className="text-sm text-slate-500">
             <span className="font-medium text-slate-600">Outlet List</span> / Outlet Configuration
           </div>

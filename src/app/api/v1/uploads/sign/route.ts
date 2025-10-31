@@ -4,17 +4,20 @@ import { z } from "zod";
 import { mapPrismaSchemaError } from "@/lib/errors";
 import { failure, success } from "@/lib/response";
 import { formatZodIssues } from "@/lib/validation";
-import { buildOutletAssetKey, createSignedUploadUrl } from "@/lib/storage";
+import { storageConfig } from "@/lib/config";
+import { buildOutletAssetKey, createSignedUploadUrl, type OutletAssetKind } from "@/lib/storage";
 
-const MAX_SIZES: Record<"logo" | "banner", number> = {
+const MAX_SIZES: Record<OutletAssetKind, number> = {
   logo: 1 * 1024 * 1024, // 1 MB
   banner: 3 * 1024 * 1024, // 3 MB
+  menu: 3 * 1024 * 1024, // 3 MB
+  room: 5 * 1024 * 1024, // 5 MB
 };
 
 const ALLOWED_TYPES = new Set(["image/png", "image/jpeg"]);
 
 const requestSchema = z.object({
-  kind: z.enum(["logo", "banner"]),
+  kind: z.enum(["logo", "banner", "menu", "room"]),
   contentType: z.string().min(1),
   contentLength: z.number().int().positive(),
   originalName: z.string().min(1).max(255).optional(),
@@ -80,6 +83,8 @@ export async function POST(request: Request) {
       success({
         uploadUrl,
         publicUrl,
+        storageKey: key,
+        bucket: storageConfig.bucket,
         key,
       }),
     );

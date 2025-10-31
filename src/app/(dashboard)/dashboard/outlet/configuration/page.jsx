@@ -1,6 +1,8 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+import Link from "next/link";
+
 import OutletConfigurationView from "./view";
 import { ToastProvider } from "@/components/ui/use-toast";
 
@@ -11,12 +13,12 @@ export default async function OutletConfigurationPage({ searchParams }) {
   if (!id) {
     return (
       <section className="space-y-4">
-        <a
+        <Link
           href="/dashboard/outlet"
           className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200"
         >
           ← Outlet List
-        </a>
+        </Link>
         <div className="rounded-3xl border border-rose-200 bg-rose-50 px-4 py-6 text-sm text-rose-600">
           Parameter <code>id</code> wajib ada untuk melihat konfigurasi outlet.
         </div>
@@ -30,12 +32,12 @@ export default async function OutletConfigurationPage({ searchParams }) {
   if (!response.ok) {
     return (
       <section className="space-y-4">
-        <a
+        <Link
           href="/dashboard/outlet"
           className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200"
         >
           ← Outlet List
-        </a>
+        </Link>
         <div className="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-6 text-sm text-amber-700">
           Outlet dengan ID <strong>{id}</strong> tidak ditemukan.
         </div>
@@ -49,12 +51,12 @@ export default async function OutletConfigurationPage({ searchParams }) {
   if (!outlet) {
     return (
       <section className="space-y-4">
-        <a
+        <Link
           href="/dashboard/outlet"
           className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-200"
         >
           ← Outlet List
-        </a>
+        </Link>
         <div className="rounded-3xl border border-amber-200 bg-amber-50 px-4 py-6 text-sm text-amber-700">
           Outlet dengan ID <strong>{id}</strong> tidak ditemukan.
         </div>
