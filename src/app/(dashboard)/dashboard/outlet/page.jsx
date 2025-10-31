@@ -190,7 +190,7 @@ export default function OutletListPage() {
         <td className="px-4 py-3">
           <div className="flex items-center justify-end gap-2">
             <Link
-              href={`/dashboard/outlet/Outlet Configuration?id=${encodeURIComponent(outlet.id)}`}
+              href={`/dashboard/outlet/configuration?id=${encodeURIComponent(outlet.id)}`}
               className="flex h-8 w-8 items-center justify-center rounded-full text-base text-blue-600 transition hover:bg-blue-50"
               aria-label={`Lihat ${outlet.name}`}
             >

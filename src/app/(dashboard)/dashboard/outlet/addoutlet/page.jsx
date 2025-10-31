@@ -597,11 +597,11 @@ export default function AddOutletPage() {
 
   const handleSuccessRedirect = () => {
     if (createdOutletId) {
-      router.push(
-        `/dashboard/outlet/Outlet Configuration?id=${encodeURIComponent(createdOutletId)}`,
+      router.replace(
+        `/dashboard/outlet/configuration?id=${encodeURIComponent(createdOutletId)}`,
       );
     } else {
-      router.push("/dashboard/outlet");
+      router.replace("/dashboard/outlet");
     }
   };
 

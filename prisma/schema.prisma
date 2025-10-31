@@ -1,10 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,7 +7,394 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-        
+
+model User {
+  id              String           @id @default(cuid())
+  name            String
+  email           String           @unique
+  role            UserRole
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  auditLogs       AuditLog[]
+  createdOutlets  Outlet[]         @relation("OutletCreatedBy")
+  updatedOutlets  Outlet[]         @relation("OutletUpdatedBy")
+  refreshSessions RefreshSession[]
+  sessions        Session[]
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  expiresAt DateTime
+  userAgent String?
+  ip        String?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model RefreshSession {
+  id          String    @id @default(cuid())
+  familyId    String
+  userId      String
+  hashedToken String    @unique
+  rotation    Int       @default(0)
+  expiresAt   DateTime
+  deviceMeta  Json?
+  ip          String?
+  userAgent   String?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([familyId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  actor     User?    @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Country {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  deletedAt DateTime?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  provinces Province[]
+}
+
+model Province {
+  id        String    @id @default(cuid())
+  countryId String
+  name      String
+  slug      String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  cities    City[]
+  country   Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@unique([countryId, name])
+  @@unique([countryId, slug])
+  @@index([countryId])
+}
+
+model City {
+  id         String    @id @default(cuid())
+  provinceId String
+  name       String
+  slug       String
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  province   Province  @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  outlets    Outlet[]
+
+  @@unique([provinceId, name])
+  @@unique([provinceId, slug])
+  @@index([provinceId])
+  @@index([name])
+}
+
+model Outlet {
+  id             String         @id @default(cuid())
+  name           String
+  slug           String         @unique
+  phone          String?
+  address        String?
+  lat            Decimal?       @db.Decimal(9, 6)
+  lng            Decimal?       @db.Decimal(9, 6)
+  priceTier      PriceTier
+  status         OutletStatus   @default(DRAFT)
+  activatedAt    DateTime?
+  deletedAt      DateTime?
+  cityId         String
+  createdById    String?
+  updatedById    String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  logoUrl        String?
+  bannerUrl      String?
+  amenity        Amenity?
+  entertainment  Entertainment?
+  feature        Feature?
+  menuImages     MenuImage[]
+  openingHours   OpeningHour[]
+  roomAmenities  OutletRoomAmenity[]
+  musicAmenities OutletMusicAmenity[]
+  foodPreferences OutletFoodPreference[]
+  parkingOptions OutletParkingOption[]
+  slugHistories  OutletSlugHistory[]
+  city           City           @relation(fields: [cityId], references: [id])
+  createdBy      User?          @relation("OutletCreatedBy", fields: [createdById], references: [id])
+  updatedBy      User?          @relation("OutletUpdatedBy", fields: [updatedById], references: [id])
+  roomCategories RoomCategory[]
+
+  @@index([cityId])
+  @@index([status])
+  @@index([lat, lng])
+}
+
+model OpeningHour {
+  id        String   @id @default(cuid())
+  outletId  String
+  day       Int
+  open      DateTime @db.Time(0)
+  close     DateTime @db.Time(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  outlet    Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+
+  @@unique([outletId, day])
+  @@index([day])
+}
+
+model Feature {
+  id                 String               @id @default(cuid())
+  outletId           String               @unique
+  wifiMbps           Int?
+  outletsCount       Int?
+  wifiLevel          WifiLevel?
+  socketAvailability SocketAvailability?
+  acLevel            AcCoolLevel?
+  musholaLevel       FeatureLevel?
+  toiletLevel        FeatureLevel?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  outlet             Outlet               @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  musholaItems       FeatureMusholaItem[]
+  toiletItems        FeatureToiletItem[]
+}
+
+model FeatureMusholaItem {
+  id        String      @id @default(cuid())
+  featureId String
+  item      MusholaItem
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  feature   Feature     @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([featureId, item])
+  @@index([item])
+}
+
+model FeatureToiletItem {
+  id        String     @id @default(cuid())
+  featureId String
+  item      ToiletItem
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  feature   Feature    @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([featureId, item])
+  @@index([item])
+}
+
+model RoomAmenityTag {
+  id        String               @id @default(cuid())
+  name      String               @unique
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  outlets   OutletRoomAmenity[]
+}
+
+model MusicAmenityTag {
+  id        String                @id @default(cuid())
+  name      String                @unique
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  outlets   OutletMusicAmenity[]
+}
+
+model FoodPreferenceTag {
+  id        String                  @id @default(cuid())
+  name      String                  @unique
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  outlets   OutletFoodPreference[]
+}
+
+model ParkingTag {
+  id        String              @id @default(cuid())
+  name      String              @unique
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  outlets   OutletParkingOption[]
+}
+
+model OutletRoomAmenity {
+  id        String         @id @default(cuid())
+  outletId  String
+  tagId     String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  outlet    Outlet         @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  tag       RoomAmenityTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([outletId, tagId])
+  @@index([tagId])
+}
+
+model OutletMusicAmenity {
+  id        String          @id @default(cuid())
+  outletId  String
+  tagId     String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  outlet    Outlet          @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  tag       MusicAmenityTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([outletId, tagId])
+  @@index([tagId])
+}
+
+model OutletFoodPreference {
+  id        String            @id @default(cuid())
+  outletId  String
+  tagId     String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  outlet    Outlet            @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  tag       FoodPreferenceTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([outletId, tagId])
+  @@index([tagId])
+}
+
+model OutletParkingOption {
+  id        String      @id @default(cuid())
+  outletId  String
+  tagId     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  outlet    Outlet      @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  tag       ParkingTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([outletId, tagId])
+  @@index([tagId])
+}
+
+model OutletSlugHistory {
+  id        String   @id @default(cuid())
+  outletId  String
+  oldSlug   String
+  newSlug   String
+  changedAt DateTime @default(now())
+  outlet    Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+
+  @@index([oldSlug])
+  @@index([outletId])
+}
+
+model Amenity {
+  id        String   @id @default(cuid())
+  outletId  String   @unique
+  sofa      Boolean  @default(false)
+  babyChair Boolean  @default(false)
+  booksText String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  outlet    Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+}
+
+model Entertainment {
+  id          String   @id @default(cuid())
+  outletId    String   @unique
+  liveMusic   Boolean?
+  inCafeMusic Boolean?
+  dj          Boolean?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  outlet      Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+}
+
+model RoomCategory {
+  id          String           @id @default(cuid())
+  outletId    String
+  type        RoomCategoryType
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  outlet      Outlet           @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  images      RoomImage[]
+
+  @@index([outletId, type])
+}
+
+model RoomImage {
+  id             String       @id @default(cuid())
+  roomCategoryId String
+  url            String
+  storageKey     String
+  bucket         String
+  mime           String
+  width          Int
+  height         Int
+  blurhash       String?
+  checksum       String?
+  createdAt      DateTime     @default(now())
+  roomCategory   RoomCategory @relation(fields: [roomCategoryId], references: [id], onDelete: Cascade)
+
+  @@index([roomCategoryId])
+  @@index([createdAt])
+}
+
+model MenuImage {
+  id         String   @id @default(cuid())
+  outletId   String
+  url        String
+  storageKey String
+  bucket     String
+  mime       String
+  width      Int
+  height     Int
+  blurhash   String?
+  checksum   String?
+  createdAt  DateTime @default(now())
+  outlet     Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+
+  @@index([outletId])
+  @@index([createdAt])
+}
+
+model Banner {
+  id        String         @id @default(cuid())
+  platform  BannerPlatform
+  title     String?
+  imageUrl  String
+  order     Int
+  status    BannerStatus   @default(DRAFT)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  deletedAt DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([platform, order])
+  @@index([status])
+  @@index([deletedAt])
+}
 
 enum UserRole {
   OWNER
@@ -51,6 +431,38 @@ enum FeatureLevel {
   HIGH
 }
 
+enum WifiLevel {
+  SLOW
+  STABLE
+  FAST
+}
+
+enum SocketAvailability {
+  LIMITED
+  SELECT_TABLES
+  EACH_TABLE
+}
+
+enum AcCoolLevel {
+  COOL
+  MEDIUM
+  NOT_COOL
+}
+
+enum MusholaItem {
+  SEJADAH
+  ALQURAN
+  SARUNG
+  MUKENA
+}
+
+enum ToiletItem {
+  TISU
+  SEMPROTAN
+  WASTAFEL
+  PEMBALUT
+}
+
 enum BannerPlatform {
   WEB
   MOBILE
@@ -59,265 +471,4 @@ enum BannerPlatform {
 enum BannerStatus {
   DRAFT
   ACTIVE
-}
-
-model User {
-  id              String            @id @default(cuid())
-  name            String
-  email           String            @unique
-  role            UserRole
-  passwordHash    String
-  sessions        Session[]
-  refreshSessions RefreshSession[]
-  createdOutlets  Outlet[]          @relation("OutletCreatedBy")
-  updatedOutlets  Outlet[]          @relation("OutletUpdatedBy")
-  auditLogs       AuditLog[]
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-}
-
-model Session {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt  DateTime
-  userAgent  String?
-  ip         String?
-  revokedAt  DateTime?
-  createdAt  DateTime @default(now())
-
-  @@index([userId])
-  @@index([expiresAt])
-}
-
-model RefreshSession {
-  id          String   @id @default(cuid())
-  familyId    String
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hashedToken String   @unique
-  rotation    Int      @default(0)
-  expiresAt   DateTime
-  deviceMeta  Json?
-  ip          String?
-  userAgent   String?
-  revokedAt   DateTime?
-  createdAt   DateTime @default(now())
-
-  @@index([userId])
-  @@index([expiresAt])
-  @@index([familyId])
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  actorId   String?
-  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  action    String
-  entity    String
-  entityId  String
-  before    Json?
-  after     Json?
-  ip        String?
-  userAgent String?
-  createdAt DateTime @default(now())
-
-  @@index([entity, entityId])
-  @@index([createdAt])
-}
-
-model Country {
-  id        String     @id @default(cuid())
-  name      String
-  slug      String     @unique
-  provinces Province[]
-  deletedAt DateTime?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  @@unique([name])
-}
-
-model Province {
-  id        String   @id @default(cuid())
-  countryId String
-  country   Country  @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  name      String
-  slug      String
-  cities    City[]
-  deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([countryId, name])
-  @@unique([countryId, slug])
-  @@index([countryId])
-}
-
-model City {
-  id         String   @id @default(cuid())
-  provinceId String
-  province   Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
-  name       String
-  slug       String
-  outlets    Outlet[]
-  deletedAt  DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@unique([provinceId, name])
-  @@unique([provinceId, slug])
-  @@index([provinceId])
-  @@index([name])
-}
-
-model Outlet {
-  id           String         @id @default(cuid())
-  name         String
-  slug         String         @unique
-  phone        String?
-  address      String?
-  lat          Decimal?       @db.Decimal(9, 6)
-  lng          Decimal?       @db.Decimal(9, 6)
-  logoUrl      String?
-  bannerUrl    String?
-  priceTier    PriceTier
-  status       OutletStatus   @default(DRAFT)
-  activatedAt  DateTime?
-  deletedAt    DateTime?
-  cityId       String
-  city         City           @relation(fields: [cityId], references: [id], onDelete: Restrict)
-  createdById  String?
-  createdBy    User?          @relation("OutletCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  updatedById  String?
-  updatedBy    User?          @relation("OutletUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  openingHours OpeningHour[]
-  feature      Feature?
-  amenity      Amenity?
-  entertainment Entertainment?
-  roomCategories RoomCategory[]
-  menuImages   MenuImage[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-
-  @@index([cityId])
-  @@index([status])
-  @@index([lat, lng])
-}
-
-model OpeningHour {
-  id        String   @id @default(cuid())
-  outletId  String
-  outlet    Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  day       Int
-  open      DateTime @db.Time(0)
-  close     DateTime @db.Time(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([outletId, day])
-  @@index([day])
-}
-
-model Feature {
-  id            String        @id @default(cuid())
-  outletId      String        @unique
-  outlet        Outlet        @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  wifiMbps      Int?
-  outletsCount  Int?
-  acLevel       FeatureLevel?
-  musholaLevel  FeatureLevel?
-  toiletLevel   FeatureLevel?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-}
-
-model Amenity {
-  id         String   @id @default(cuid())
-  outletId   String   @unique
-  outlet     Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  sofa       Boolean  @default(false)
-  babyChair  Boolean  @default(false)
-  booksText  String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
-model Entertainment {
-  id           String   @id @default(cuid())
-  outletId     String   @unique
-  outlet       Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  liveMusic    Boolean?
-  inCafeMusic  Boolean?
-  dj           Boolean?
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model RoomCategory {
-  id          String         @id @default(cuid())
-  outletId    String
-  outlet      Outlet         @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  type        RoomCategoryType
-  description String?
-  images      RoomImage[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  @@index([outletId, type])
-}
-
-model RoomImage {
-  id             String       @id @default(cuid())
-  roomCategoryId String
-  roomCategory   RoomCategory @relation(fields: [roomCategoryId], references: [id], onDelete: Cascade)
-  url            String
-  storageKey     String
-  bucket         String
-  mime           String
-  width          Int
-  height         Int
-  blurhash       String?
-  checksum       String?
-  createdAt      DateTime     @default(now())
-
-  @@index([roomCategoryId])
-  @@index([createdAt])
-}
-
-model MenuImage {
-  id         String   @id @default(cuid())
-  outletId   String
-  outlet     Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
-  url        String
-  storageKey String
-  bucket     String
-  mime       String
-  width      Int
-  height     Int
-  blurhash   String?
-  checksum   String?
-  createdAt  DateTime @default(now())
-
-  @@index([outletId])
-  @@index([createdAt])
-}
-
-model Banner {
-  id         String        @id @default(cuid())
-  platform   BannerPlatform
-  title      String?
-  imageUrl   String
-  order      Int
-  status     BannerStatus   @default(DRAFT)
-  startsAt   DateTime?
-  endsAt     DateTime?
-  deletedAt  DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-
-  @@index([platform, order])
-  @@index([status])
-  @@index([deletedAt])
 }

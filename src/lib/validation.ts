@@ -180,9 +180,17 @@ export async function assertActivationRules(prisma: PrismaClientLike, outletId: 
         select: {
           wifiMbps: true,
           outletsCount: true,
+          wifiLevel: true,
+          socketAvailability: true,
           acLevel: true,
           musholaLevel: true,
           toiletLevel: true,
+          _count: {
+            select: {
+              musholaItems: true,
+              toiletItems: true,
+            },
+          },
         },
       },
     },
@@ -214,9 +222,13 @@ export async function assertActivationRules(prisma: PrismaClientLike, outletId: 
     [
       feature.wifiMbps,
       feature.outletsCount,
+      feature.wifiLevel,
+      feature.socketAvailability,
       feature.acLevel,
       feature.musholaLevel,
       feature.toiletLevel,
+      feature._count?.musholaItems,
+      feature._count?.toiletItems,
     ].some((value) => value !== null && value !== undefined);
 
   if (!hasRoomWithImage && !hasMenuImage && !hasFeature) {
