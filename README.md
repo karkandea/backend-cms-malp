@@ -50,7 +50,7 @@ Open `http://localhost:3000`. Use `pnpm build`, `pnpm lint`, and `pnpm test` for
 - Database: `DATABASE_URL`, `DIRECT_URL`.
 - Authentication: `SESSION_SECRET`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`; production mode requires explicit non-default secrets.
 - Other integrations have additional settings; inspect [`src/lib/config.ts`](src/lib/config.ts) and the storage adapter before enabling them.
-- The repository contains development seed fixtures and example identities. **Never reuse sample passwords or seed a publicly reachable database without replacing them.** Keep actual values in private environment configuration.
+- The seed script requires private `MALP_SEED_OWNER_EMAIL`, `MALP_SEED_OWNER_PASSWORD`, `MALP_SEED_ADMIN_EMAIL`, and `MALP_SEED_ADMIN_PASSWORD` inputs. There are no bundled account passwords. Seed only a disposable development database; never use this workflow to initialize public accounts.
 
 ## Evidence and limitations
 
