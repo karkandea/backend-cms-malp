@@ -29,20 +29,36 @@ const PROVINCES = [
   },
 ];
 
+function requireSeedValue(name: string): string {
+  const value = process.env[name];
+  if (!value || !value.trim()) {
+    throw new Error(`${name} must be supplied privately before running the seed.`);
+  }
+  return value;
+}
+
 const USERS = [
   {
-    email: "owner@malp.app",
-    name: "MALP Owner",
+    email: requireSeedValue("MALP_SEED_OWNER_EMAIL").trim(),
+    name: "Owner",
     role: UserRole.OWNER,
-    password: "Owner@123!",
+    password: requireSeedValue("MALP_SEED_OWNER_PASSWORD"),
   },
   {
-    email: "admin@malp.app",
-    name: "MALP Admin",
+    email: requireSeedValue("MALP_SEED_ADMIN_EMAIL").trim(),
+    name: "Admin",
     role: UserRole.ADMIN,
-    password: "Admin@123!",
+    password: requireSeedValue("MALP_SEED_ADMIN_PASSWORD"),
   },
 ];
+
+if (USERS[0].email.toLowerCase() === USERS[1].email.toLowerCase()) {
+  throw new Error("Seed owner and admin emails must be distinct.");
+}
+if (USERS.some((user) => user.password.length < 12)) {
+  throw new Error("Seed account passwords must be at least 12 characters.");
+}
+
 
 function timeOfDay(hour: number, minute: number) {
   const date = new Date(Date.UTC(1970, 0, 1, hour, minute, 0));
