@@ -33,18 +33,19 @@
 1. Ensure `DATABASE_URL` points to your dev Postgres (use `.env` or override per shell).
 2. Generate SQL (already in `prisma/migrations/20241030000000_init/migration.sql`) or apply via Prisma:
    - `pnpm prisma migrate deploy` (prod/CI) or `pnpm prisma migrate dev --name init` (interactive dev).
-3. Seed required fixtures: `pnpm prisma db seed`.
+3. Configure four private `MALP_SEED_*` account values (unique emails and passwords of at least 12 characters); then run `pnpm prisma db seed` only against a disposable development database.
 4. Inspect using `pnpm prisma studio` (verify owner/admin, area hierarchy, outlet companions).
 
 ## Seed Snapshot
-- Owner: `owner@malp.app` / `Owner@123!` (argon2id).
-- Admin: `admin@malp.app` / `Admin@123!`.
+- Owner: supplied via private `MALP_SEED_OWNER_EMAIL` and `MALP_SEED_OWNER_PASSWORD`.
+- Admin: supplied via private `MALP_SEED_ADMIN_EMAIL` and `MALP_SEED_ADMIN_PASSWORD`.
 - Area: Indonesia → {DKI Jakarta, Jawa Barat} with four example cities.
 - Outlet: “Kopi Contoh” masih berstatus draft, jam operasional Senin 08:00–21:00, fitur Wi-Fi 50 Mbps terisi sehingga siap diaktivasi setelah gambar/menu tersedia.
 
 ## Environment Variables
 - `DATABASE_URL` — required for Prisma Client, migrations, and seeding.
 - `DIRECT_URL` — direct connection string (non-pooled) for migrations/Prisma Studio.
+- `MALP_SEED_OWNER_EMAIL`, `MALP_SEED_OWNER_PASSWORD`, `MALP_SEED_ADMIN_EMAIL`, `MALP_SEED_ADMIN_PASSWORD` — required only for intentional seeding; never commit them.
 - Supabase & auth secrets (`SUPABASE_*`, `UPSTASH_*`, `JWT_*`, `CMS_SESSION_SECRET`, `APP_BASE_URL`) remain unchanged from existing `.env`; Prisma ignores unset values.
 
 ## Re-run & Rollback Notes
